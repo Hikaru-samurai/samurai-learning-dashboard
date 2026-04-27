@@ -643,10 +643,6 @@
     </div>
     <div class="header-course" id="headerCourse"></div>
     <div class="header-right">
-      <div class="api-key-wrap">
-        <span class="api-key-label">APIキー：</span>
-        <input type="password" id="apiKeyInput" class="api-key-input" placeholder="sk-ant-..." autocomplete="off">
-      </div>
       <button class="btn btn-outline" id="themeToggleBtn" onclick="toggleTheme()">🌙 ダーク</button>
       <button class="btn btn-outline" onclick="openSettingsModal()">⚙️ 設定</button>
     </div>
@@ -1014,16 +1010,11 @@
   //  CLAUDE API
   // ============================================================
   async function getFeedback(record) {
-    const apiKey = document.getElementById('apiKeyInput').value.trim();
-    if (!apiKey) {
-      return '※ APIキーが未入力です。ヘッダーのAPIキー欄に入力するとフィードバックを受け取れます。';
-    }
-
     const settings = loadSettings();
     const courseName = settings?.courseName || '不明';
     const dailyGoal = settings?.dailyGoalHours || 3;
 
-    const userMsg = `
+    const message = `
 【受講コース】${courseName}
 【日付】${record.date}
 【今日学んだこと】${record.learned}
@@ -1039,29 +1030,19 @@
 `.trim();
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/.netlify/functions/feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 400,
-          system: 'あなたはプログラミング・AI・フリーランス独立など幅広いスキルを教えるスクールの学習コーチです。受講生の学習記録と目標に対して、具体的・前向き・簡潔にフィードバックしてください。',
-          messages: [{ role: 'user', content: userMsg }]
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        return `APIエラー: ${err.error?.message || res.statusText}`;
+        return `APIエラー: ${err.error || res.statusText}`;
       }
 
       const data = await res.json();
-      return data.content?.[0]?.text || 'フィードバックを取得できませんでした。';
+      return data.text || 'フィードバックを取得できませんでした。';
     } catch(e) {
       return `通信エラー: ${e.message}`;
     }
