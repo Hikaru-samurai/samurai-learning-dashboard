@@ -968,25 +968,13 @@
       feedback: ''
     };
 
-    // Show loading feedback
-    setFeedbackLoading();
+    // Get feedback and save record
+    const feedback = getFeedback(record);
+    record.feedback = feedback;
 
-    // Save record first
     const logs = loadLog();
     logs.push(record);
     saveLog(logs);
-
-    // Get feedback
-    const feedback = await getFeedback(record);
-    record.feedback = feedback;
-
-    // Update record with feedback
-    const updatedLogs = loadLog();
-    const idx = updatedLogs.findIndex(l => l.id === record.id);
-    if (idx !== -1) {
-      updatedLogs[idx].feedback = feedback;
-      saveLog(updatedLogs);
-    }
 
     setFeedbackText(feedback);
     renderDashboard();
@@ -1007,45 +995,58 @@
   }
 
   // ============================================================
-  //  CLAUDE API
+  //  RANDOM FEEDBACK
   // ============================================================
-  async function getFeedback(record) {
+  const FEEDBACK_MESSAGES = {
+    highStar: [
+      '素晴らしい達成度です！今日の学びをしっかり自分のものにできていますね。その調子で明日も積み上げていきましょう！',
+      '完璧な1日でした！高い達成度を維持できているのは、地道な努力の積み重ねがあってこそです。明日もこの勢いで！',
+      '今日も最高のパフォーマンスですね！学習の質と量を両立できているあなたは確実に成長しています。',
+      'すごい！この調子で続ければ、目標達成は間違いなしです。今日の内容を明日の実践でぜひ活かしてみてください。',
+    ],
+    midStar: [
+      '着実に進んでいますね！完璧でなくても毎日続けることが一番大切です。明日もコツコツ積み上げていきましょう。',
+      '今日も学習お疲れさまでした！少しずつでも毎日前進しているあなたは、確実にゴールに近づいています。',
+      'よく頑張りました！詰まったところがあっても諦めずに取り組んだことが大事です。明日はさらにクリアになっているはず。',
+      '継続は力なり。今日の学びが明日の自信につながります。引き続き一歩一歩進んでいきましょう！',
+    ],
+    lowStar: [
+      '今日は難しい日だったかもしれませんが、記録を残したこと自体がすごいです。明日また気持ちを新たに挑戦しましょう！',
+      '調子が出ない日もあります。それでも学習を続けているあなたは強い！小さな一歩が大きな変化を生み出します。',
+      '完璧じゃなくていい。今日ここに記録したことが、未来のあなたへの大切な財産になります。明日もやってみよう！',
+    ],
+    overGoal: [
+      '目標時間を超えて学習できました！その熱意が成長を加速させます。ただし無理しすぎず、休息も大切にしてくださいね。',
+      '目標オーバー達成！集中力と継続力が素晴らしいです。この調子で明日も頑張りましょう！',
+      '計画以上に頑張りましたね！その努力は必ず結果に繋がります。明日も無理のない範囲で続けていきましょう。',
+    ],
+    underGoal: [
+      '目標には届かなかった日もあります。それでも学んだ時間は無駄じゃない。明日また少し頑張ってみましょう！',
+      '今日は短めでしたが、ゼロじゃないのが大事です！継続していることに自信を持って。明日は少し長めに挑戦してみて。',
+      '忙しい中でも時間を作って学んだことを褒めてあげてください。明日の自分を信じて、また一歩前へ！',
+    ],
+    hasStuck: [
+      '詰まっているところは学びのチャンスです！公式ドキュメントや検索で似た事例を探してみると解決の糸口が見つかるかも。',
+      '疑問が生まれているということは、深く考えている証拠です。メモに残しておいて、講師や仲間に聞いてみるのもいい方法ですよ。',
+      '詰まるのは成長中のサインです！一晩置くと頭がリセットされて、翌日あっさり解決することもありますよ。',
+    ],
+  };
+
+  function getFeedback(record) {
     const settings = loadSettings();
-    const courseName = settings?.courseName || '不明';
     const dailyGoal = settings?.dailyGoalHours || 3;
+    const pool = [];
 
-    const message = `
-【受講コース】${courseName}
-【日付】${record.date}
-【今日学んだこと】${record.learned}
-【学習時間】${record.hours}時間（1日の目標：${dailyGoal}時間）
-【詰まっていること・疑問】${record.stuck || 'なし'}
-【達成度】${record.stars}/5
+    if (record.stars >= 4) pool.push(...FEEDBACK_MESSAGES.highStar);
+    else if (record.stars >= 3) pool.push(...FEEDBACK_MESSAGES.midStar);
+    else pool.push(...FEEDBACK_MESSAGES.lowStar);
 
-上記の学習記録に対して、以下の観点で100〜150字程度のフィードバックを日本語でお願いします：
-・今日の学習内容への一言コメント
-・詰まっていることへのヒント（入力がある場合）
-・目標学習時間に対しての達成状況へのコメント（超えていれば称賛、未達なら励まし）
-・明日への一言応援メッセージ
-`.trim();
+    if (record.hours >= dailyGoal) pool.push(...FEEDBACK_MESSAGES.overGoal);
+    else pool.push(...FEEDBACK_MESSAGES.underGoal);
 
-    try {
-      const res = await fetch('/.netlify/functions/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message })
-      });
+    if (record.stuck && record.stuck.trim()) pool.push(...FEEDBACK_MESSAGES.hasStuck);
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        return `APIエラー: ${err.error || res.statusText}`;
-      }
-
-      const data = await res.json();
-      return data.text || 'フィードバックを取得できませんでした。';
-    } catch(e) {
-      return `通信エラー: ${e.message}`;
-    }
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   function setFeedbackLoading() {
