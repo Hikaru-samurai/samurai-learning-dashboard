@@ -648,11 +648,18 @@
   //  AUTH STATE
   // ============================================================
   sb.auth.onAuthStateChange(async (event, session) => {
+    console.log('auth event:', event, session?.user?.email);
     if (session?.user) {
       currentUser = session.user;
-      await loadProfileAndInit();
-      document.getElementById('authScreen').classList.add('hidden');
-      document.getElementById('appScreen').classList.remove('hidden');
+      try {
+        await loadProfileAndInit();
+        document.getElementById('authScreen').classList.add('hidden');
+        document.getElementById('appScreen').classList.remove('hidden');
+      } catch(e) {
+        console.error('loadProfileAndInit error:', e);
+        document.getElementById('loginError').textContent = '初期化エラー: ' + e.message;
+        document.getElementById('loginError').classList.add('show');
+      }
     } else {
       currentUser = null;
       currentProfile = null;
