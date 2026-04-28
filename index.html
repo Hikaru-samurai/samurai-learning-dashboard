@@ -264,6 +264,12 @@
     .student-table td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .student-table tr:last-child td { border-bottom: none; }
     .student-table tbody tr:hover td { background: var(--bg-card); cursor: pointer; }
+    .role-select {
+      background: var(--bg-base); border: 1px solid var(--border); color: var(--text-primary);
+      border-radius: var(--radius-sm); padding: 5px 8px; font-size: 13px;
+      font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+    }
+    .role-select:focus { outline: none; border-color: var(--accent); }
 
     /* ========== HIDDEN ========== */
     .hidden { display: none !important; }
@@ -696,19 +702,27 @@
       sb.from('learning_logs').select('user_id,date,hours,stars')
     ]);
 
-    const students = (profiles || []).filter(p => p.role === 'student');
-    if (!students.length) {
-      wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">受講生がまだいません</div>';
+    const allUsers = (profiles || []).filter(p => p.id !== currentUser.id);
+    if (!allUsers.length) {
+      wrap.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">ユーザーがまだいません</div>';
       return;
     }
 
-    students.forEach(p => { studentCache[p.id] = p; });
+    allUsers.forEach(p => { studentCache[p.id] = p; });
+    const isAdmin = currentProfile?.role === 'admin';
 
-    const rows = students.map(p => {
+    const rows = allUsers.map(p => {
       const ul = (logs || []).filter(l => l.user_id === p.id);
       const total = ul.reduce((s, l) => s + (l.hours || 0), 0);
       const streak = calcStreak(ul);
       const last = ul.sort((a, b) => b.date.localeCompare(a.date))[0];
+      const roleCell = isAdmin
+        ? `<select class="role-select" onchange="changeRole('${p.id}', this.value)" onclick="event.stopPropagation()">
+            <option value="student"    ${p.role==='student'    ?'selected':''}>受講生</option>
+            <option value="instructor" ${p.role==='instructor' ?'selected':''}>インストラクター</option>
+            <option value="admin"      ${p.role==='admin'      ?'selected':''}>運営</option>
+           </select>`
+        : `<span class="badge badge-${p.role}">${roleName(p.role)}</span>`;
       return `
         <tr onclick="openStudentModal('${p.id}')">
           <td>
@@ -725,6 +739,7 @@
           <td><span style="color:#64b5f6;font-weight:700;">${total % 1 === 0 ? total : total.toFixed(1)}</span> h</td>
           <td style="color:var(--text-secondary);">${last ? last.date : '—'}</td>
           <td style="color:var(--text-muted);">${ul.length} 件</td>
+          <td onclick="event.stopPropagation()">${roleCell}</td>
         </tr>
       `;
     });
@@ -733,12 +748,19 @@
       <table class="student-table">
         <thead>
           <tr>
-            <th>受講生</th><th>受講コース</th><th>🔥 連続</th><th>⏱ 累計</th><th>最終記録</th><th>記録数</th>
+            <th>ユーザー</th><th>受講コース</th><th>🔥 連続</th><th>⏱ 累計</th><th>最終記録</th><th>記録数</th><th>ロール</th>
           </tr>
         </thead>
         <tbody>${rows.join('')}</tbody>
       </table>
     `;
+  }
+
+  async function changeRole(userId, newRole) {
+    const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', userId);
+    if (error) { showToast('変更に失敗しました', true); return; }
+    studentCache[userId] = { ...studentCache[userId], role: newRole };
+    showToast(`ロールを「${roleName(newRole)}」に変更しました ✓`);
   }
 
   async function openStudentModal(userId) {
