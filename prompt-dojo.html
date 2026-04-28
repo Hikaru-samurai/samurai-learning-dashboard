@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>プロンプト道場 | Training Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #888;
+      --accent: #F5C842;
+      --accent-dim: rgba(245, 200, 66, 0.12);
+      --accent-border: rgba(245, 200, 66, 0.3);
+      --red: #e55;
+      --green: #4c9;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Nav ── */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .nav-badge {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 40px 24px 32px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    header .icon { font-size: 36px; margin-bottom: 12px; }
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    header p { font-size: 14px; color: var(--muted); }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── API Key ── */
+    .api-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .api-section label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .api-row {
+      display: flex;
+      gap: 10px;
+    }
+    .api-row input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .api-row input:focus { border-color: var(--accent); }
+    .api-save-btn {
+      padding: 10px 18px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 8px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .api-save-btn:hover { background: rgba(245,200,66,0.2); }
+    .api-status { font-size: 12px; color: var(--muted); }
+    .api-status.ok { color: var(--green); }
+
+    /* ── Challenge Card ── */
+    .challenge-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+    }
+    .challenge-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .challenge-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .challenge-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .challenge-nav button {
+      width: 28px;
+      height: 28px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .challenge-nav button:hover { color: var(--accent); border-color: var(--accent-border); }
+    .challenge-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .challenge-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .challenge-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 14px;
+    }
+    .tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.06);
+      color: #aaa;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── Input ── */
+    .input-section { display: flex; flex-direction: column; gap: 12px; }
+    .input-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: #555; }
+
+    .submit-btn {
+      align-self: flex-end;
+      padding: 12px 28px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      color: #000;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── Result ── */
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    .result-card.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-top {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .rank-badge {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 2.4rem;
+      flex-shrink: 0;
+      border: 2px solid;
+    }
+    .rank-S { background: rgba(255,200,0,0.15); border-color: #F5C842; color: #F5C842; }
+    .rank-A { background: rgba(100,200,100,0.12); border-color: #4db878; color: #4db878; }
+    .rank-B { background: rgba(80,160,255,0.12); border-color: #5aabff; color: #5aabff; }
+    .rank-C { background: rgba(255,140,60,0.12); border-color: #ff8c3c; color: #ff8c3c; }
+    .rank-D { background: rgba(255,80,80,0.12); border-color: #e55; color: #e55; }
+
+    .result-summary h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .result-summary p { font-size: 14px; color: var(--muted); }
+
+    .score-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .score-row { display: flex; flex-direction: column; gap: 4px; }
+    .score-row-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .score-row-label span:last-child { color: var(--text); font-weight: 600; }
+    .bar-track {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: var(--accent);
+      transition: width 0.6s ease;
+    }
+
+    .feedback-text {
+      font-size: 14px;
+      color: #ccc;
+      line-height: 1.75;
+      white-space: pre-wrap;
+    }
+
+    .retry-btn {
+      align-self: flex-start;
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .retry-btn:hover { color: var(--accent); border-color: var(--accent-border); }
+
+    /* ── Loading ── */
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .loading.show { display: flex; }
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: #444;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 560px) {
+      .result-top { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="back-link" href="index.html">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M9 2L4 7l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Training Tools
+    </a>
+    <span class="nav-badge">プロンプト道場</span>
+  </nav>
+
+  <header>
+    <div class="icon">🥋</div>
+    <h1>プロンプト道場</h1>
+    <p>お題に対して最高のプロンプトを書き、S〜Dランクで採点を受けよう。</p>
+  </header>
+
+  <main>
+
+    <!-- API Key -->
+    <div class="api-section">
+      <label>Anthropic API Key</label>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="sk-ant-..." />
+        <button class="api-save-btn" onclick="saveKey()">保存</button>
+      </div>
+      <div class="api-status" id="apiStatus">APIキーを入力してください（ブラウザ内のみで使用、送信されません）</div>
+    </div>
+
+    <!-- Challenge -->
+    <div class="challenge-card">
+      <div class="challenge-header">
+        <span class="challenge-label">今日のお題</span>
+        <div class="challenge-nav">
+          <button onclick="prevChallenge()" title="前のお題">‹</button>
+          <button onclick="nextChallenge()" title="次のお題">›</button>
+        </div>
+      </div>
+      <div class="challenge-title" id="challengeTitle"></div>
+      <div class="challenge-desc" id="challengeDesc"></div>
+      <div class="challenge-tags" id="challengeTags"></div>
+    </div>
+
+    <!-- Input -->
+    <div class="input-section">
+      <div class="input-label">あなたのプロンプト</div>
+      <textarea id="promptInput" placeholder="ここにプロンプトを入力してください…&#10;&#10;例：「〇〇について、箇条書きで5点にまとめてください。各項目は具体例を含めて100字以内で説明してください。」"></textarea>
+      <button class="submit-btn" id="submitBtn" onclick="evaluate()">
+        採点する
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      採点中です…
+    </div>
+
+    <!-- Result -->
+    <div class="result-card" id="resultCard">
+      <div class="result-top">
+        <div class="rank-badge" id="rankBadge"></div>
+        <div class="result-summary">
+          <h2 id="rankLabel"></h2>
+          <p id="rankSubtitle"></p>
+        </div>
+      </div>
+
+      <div class="score-bars" id="scoreBars"></div>
+
+      <div class="feedback-text" id="feedbackText"></div>
+
+      <button class="retry-btn" onclick="retry()">もう一度挑戦する</button>
+    </div>
+
+  </main>
+
+  <footer>&copy; 2025 Training Tools</footer>
+
+  <script>
+    // ── Challenges ──────────────────────────────────────
+    const challenges = [
+      {
+        title: '料理レシピを依頼する',
+        desc: 'AIに「チキンカレーのレシピ」を教えてもらうプロンプトを書いてください。\n4人分・調理時間30分以内・初心者でも作れる内容を引き出してください。',
+        tags: ['日常', '初級', '情報収集'],
+      },
+      {
+        title: 'ブログ記事の要約を依頼する',
+        desc: '長い記事を読んだユーザーがAIに要約を頼む場面です。\n「3つの要点を箇条書きで」「各100文字以内」という条件を守りながら依頼するプロンプトを書いてください。',
+        tags: ['ライティング', '中級', '構造化'],
+      },
+      {
+        title: 'デザインフィードバックを依頼する',
+        desc: '自分が作ったWebサイトのデザインをAIにレビューしてもらいます。\n具体的で建設的なフィードバックが得られるようなプロンプトを書いてください。',
+        tags: ['デザイン', '中級', 'フィードバック'],
+      },
+      {
+        title: 'メールの文章を作成させる',
+        desc: '取引先への謝罪メールをAIに書いてもらいます。\n件名・宛先・状況（納期遅延）・トーン（丁寧・誠実）を含むプロンプトを書いてください。',
+        tags: ['ビジネス', '上級', '文章生成'],
+      },
+      {
+        title: 'コードのバグ修正を依頼する',
+        desc: 'Pythonコードにバグがあり、AIに修正してもらいます。\nコードを貼り付ける場所・エラーメッセージの伝え方・期待する動作の説明を含むプロンプトを書いてください。',
+        tags: ['エンジニアリング', '上級', 'デバッグ'],
+      },
+    ];
+
+    let currentIdx = 0;
+
+    function renderChallenge() {
+      const c = challenges[currentIdx];
+      document.getElementById('challengeTitle').textContent = `${currentIdx + 1}/${challenges.length}　${c.title}`;
+      document.getElementById('challengeDesc').textContent = c.desc;
+      document.getElementById('challengeTags').innerHTML = c.tags.map(t => `<span class="tag">${t}</span>`).join('');
+    }
+
+    function nextChallenge() {
+      currentIdx = (currentIdx + 1) % challenges.length;
+      renderChallenge();
+      retry();
+    }
+
+    function prevChallenge() {
+      currentIdx = (currentIdx - 1 + challenges.length) % challenges.length;
+      renderChallenge();
+      retry();
+    }
+
+    renderChallenge();
+
+    // ── API Key ──────────────────────────────────────────
+    function saveKey() {
+      const key = document.getElementById('apiKey').value.trim();
+      if (!key.startsWith('sk-ant-')) {
+        document.getElementById('apiStatus').textContent = '⚠️ APIキーの形式が正しくありません（sk-ant- で始まる必要があります）';
+        document.getElementById('apiStatus').className = 'api-status';
+        return;
+      }
+      sessionStorage.setItem('anthropic_key', key);
+      document.getElementById('apiStatus').textContent = '✓ APIキーを保存しました（このセッションのみ）';
+      document.getElementById('apiStatus').className = 'api-status ok';
+    }
+
+    function getKey() {
+      return sessionStorage.getItem('anthropic_key') || document.getElementById('apiKey').value.trim();
+    }
+
+    // ── Evaluate ─────────────────────────────────────────
+    const rankInfo = {
+      S: { label: 'Sランク — 達人級', subtitle: '完璧なプロンプトです。すべての要素が揃っています。', cls: 'rank-S' },
+      A: { label: 'Aランク — 上級者', subtitle: 'とても良いプロンプトです。わずかな改善で完璧になります。', cls: 'rank-A' },
+      B: { label: 'Bランク — 中級者', subtitle: '基本はできています。いくつかの点で改善の余地があります。', cls: 'rank-B' },
+      C: { label: 'Cランク — 初級者', subtitle: '伝わりますが、具体性や構造に改善が必要です。', cls: 'rank-C' },
+      D: { label: 'Dランク — 要練習', subtitle: '大幅な改善が必要です。フィードバックを参考にしてください。', cls: 'rank-D' },
+    };
+
+    async function evaluate() {
+      const key = getKey();
+      if (!key || !key.startsWith('sk-ant-')) {
+        alert('APIキーを入力・保存してください。');
+        return;
+      }
+
+      const prompt = document.getElementById('promptInput').value.trim();
+      if (!prompt) {
+        alert('プロンプトを入力してください。');
+        return;
+      }
+
+      const challenge = challenges[currentIdx];
+
+      document.getElementById('submitBtn').disabled = true;
+      document.getElementById('resultCard').classList.remove('show');
+      document.getElementById('loading').classList.add('show');
+
+      const systemPrompt = `あなたはAIプロンプト評価の専門家です。
+ユーザーが書いたプロンプトを以下の基準で評価し、必ずJSON形式で返してください。
+
+評価基準（各20点、合計100点）:
+1. 明確性 - タスクが明確に伝わっているか
+2. 具体性 - 条件・制約・出力形式が具体的か
+3. 文脈 - 必要な背景情報が含まれているか
+4. 効率性 - 余分な情報がなく簡潔か
+5. 完全性 - お題の要件をすべて満たしているか
+
+ランク基準:
+S: 90-100点
+A: 75-89点
+B: 55-74点
+C: 35-54点
+D: 0-34点
+
+必ず以下のJSON形式のみで返してください（前後に説明文不要）:
+{
+  "rank": "S|A|B|C|D",
+  "total": 数値,
+  "scores": {
+    "明確性": 数値,
+    "具体性": 数値,
+    "文脈": 数値,
+    "効率性": 数値,
+    "完全性": 数値
+  },
+  "feedback": "3〜5文の具体的なフィードバック。良い点と改善点を含めてください。"
+}`;
+
+      const userMessage = `【お題】
+${challenge.title}
+
+【お題の説明】
+${challenge.desc}
+
+【評価するプロンプト】
+${prompt}`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'content-type': 'application/json',
+            'anthropic-dangerous-direct-browser-access': 'true',
+          },
+          body: JSON.stringify({
+            model: 'claude-haiku-4-5',
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userMessage }],
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error?.message || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const raw = data.content[0].text.trim();
+
+        let result;
+        try {
+          const jsonMatch = raw.match(/\{[\s\S]*\}/);
+          result = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+        } catch {
+          throw new Error('採点結果の解析に失敗しました。');
+        }
+
+        showResult(result);
+
+      } catch (e) {
+        alert('エラーが発生しました：' + e.message);
+      } finally {
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('submitBtn').disabled = false;
+      }
+    }
+
+    function showResult(result) {
+      const rank = result.rank || 'C';
+      const info = rankInfo[rank] || rankInfo['C'];
+
+      // Badge
+      const badge = document.getElementById('rankBadge');
+      badge.textContent = rank;
+      badge.className = 'rank-badge ' + info.cls;
+
+      document.getElementById('rankLabel').textContent = info.label;
+      document.getElementById('rankSubtitle').textContent = info.subtitle;
+
+      // Score bars
+      const barsEl = document.getElementById('scoreBars');
+      barsEl.innerHTML = '';
+      const scores = result.scores || {};
+      Object.entries(scores).forEach(([label, score]) => {
+        const pct = Math.min(100, Math.round((score / 20) * 100));
+        barsEl.innerHTML += `
+          <div class="score-row">
+            <div class="score-row-label">
+              <span>${label}</span>
+              <span>${score}/20</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${pct}%"></div>
+            </div>
+          </div>`;
+      });
+
+      document.getElementById('feedbackText').textContent = result.feedback || '';
+
+      document.getElementById('resultCard').classList.add('show');
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function retry() {
+      document.getElementById('promptInput').value = '';
+      document.getElementById('resultCard').classList.remove('show');
+    }
+  </script>
+
+</body>
+</html>
