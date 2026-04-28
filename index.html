@@ -193,16 +193,12 @@
     .support-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
     .support-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-decoration: none; color: var(--text-primary); transition: all 0.2s; display: flex; flex-direction: column; gap: 10px; }
     .support-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-color: #4a4a7a; }
-    .support-card.dojo { background: linear-gradient(135deg, #2a0a18 0%, #4a0a28 100%); border-color: var(--accent); }
-    .support-card.dojo:hover { border-color: var(--accent-light); }
+    .support-card.dojo { background: var(--bg-card); border-color: var(--border); }
     .support-card-icon { font-size: 28px; }
     .support-card-label { font-size: 15px; font-weight: 700; }
-    .support-card.dojo .support-card-label { color: var(--accent-light); }
     .support-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; flex: 1; }
     .support-card-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; background: var(--bg-mid); color: var(--text-primary); border: 1px solid var(--border); transition: all 0.2s; text-decoration: none; }
     .support-card:hover .support-card-btn { background: var(--bg-base); }
-    .support-card.dojo .support-card-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .support-card.dojo:hover .support-card-btn { background: var(--accent-light); }
     .dojo-sub-link { font-size: 12px; color: var(--text-muted); text-decoration: underline; margin-top: 4px; }
     .dojo-sub-link:hover { color: var(--text-secondary); }
     .dojo-badge { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.05em; }
