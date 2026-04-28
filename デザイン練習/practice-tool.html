@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend Practice Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-base: #f5f6fa;
+  --bg-mid: #ffffff;
+  --bg-card: #eef1f8;
+  --accent: #6366f1;
+  --accent-2: #8b5cf6;
+  --accent-light: #e0e7ff;
+  --text-primary: #1e1b4b;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --border: #e5e7eb;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(99,102,241,0.08);
+  --shadow-md: 0 8px 32px rgba(99,102,241,0.14);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Nav / Tabs ── */
+.site-header {
+  background: var(--bg-mid);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  height: 60px;
+}
+
+.site-logo {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-btn {
+  padding: 6px 16px;
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+.tab-btn.active { background: var(--accent-light); color: var(--accent); }
+
+/* ── Section wrapper ── */
+.tool-section {
+  display: none;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 36px 24px;
+}
+.tool-section.active { display: block; }
+
+/* ══════════════════════════════════════
+   TOOL 1 — DAILY CHALLENGE CARD
+══════════════════════════════════════ */
+
+.challenge-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .challenge-layout { grid-template-columns: 1fr; }
+}
+
+/* Main card */
+.challenge-card {
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 36px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.challenge-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.challenge-date {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.challenge-labels {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.label-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.label-pill.trend {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.label-pill.component {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.challenge-prompt {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 32px;
+}
+
+.challenge-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: #4f46e5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1.5px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-ghost {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: none;
+}
+.btn-ghost:hover { background: var(--border); color: var(--text-primary); }
+
+/* Sidebar */
+.challenge-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.streak-card {
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.streak-number {
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+
+.streak-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.streak-flame {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+/* Tips card */
+.tips-card {
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.tips-card h3 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 5px 0;
+  line-height: 1.5;
+}
+
+.tip-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 7px;
+}
+
+/* Challenge history mini */
+.history-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.history-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+.history-dot.done { background: var(--success); border-color: var(--success); }
+
+/* ══════════════════════════════════════
+   TOOL 2 — CSS REPRODUCTION SANDBOX
+══════════════════════════════════════ */
+
+.sandbox-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  box-shadow: var(--shadow);
+}
+
+.toolbar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.select-input {
+  padding: 7px 32px 7px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-base);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.15s;
+}
+.select-input:focus { outline: none; border-color: var(--accent); }
+
+.toolbar-spacer { flex: 1; }
+
+/* Score bar */
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.score-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 100px;
+  transition: width 0.4s ease, background-color 0.4s;
+  background: var(--danger);
+}
+
+.score-label {
+  font-size: 13px;
+  font-weight: 700;
+  min-width: 38px;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+/* Split panels */
+.sandbox-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .sandbox-panels { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--bg-mid);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-base);
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.panel-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 100px;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Preview area */
+.preview-area {
+  min-height: 280px;
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  background: #fff;
+  position: relative;
+}
+
+.preview-area.checker {
+  background-image: linear-gradient(45deg, #f8f8f8 25%, transparent 25%),
+    linear-gradient(-45deg, #f8f8f8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f8f8f8 75%),
+    linear-gradient(-45deg, transparent 75%, #f8f8f8 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}
+
+/* CSS editor */
+.css-editor-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.css-textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 220px;
+  padding: 16px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  background: #fafafa;
+  border: none;
+  resize: vertical;
+  outline: none;
+  border-bottom: 1px solid var(--border);
+  tab-size: 2;
+}
+.css-textarea:focus { background: #fff; }
+.css-textarea::placeholder { color: var(--text-muted); }
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+/* Confirm overlay */
+.confirm-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-overlay.show { display: flex; }
+
+.confirm-box {
+  background: var(--bg-mid);
+  border-radius: var(--radius);
+  padding: 32px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.confirm-box h3 { font-size: 17px; margin-bottom: 10px; }
+.confirm-box p { font-size: 14px; color: var(--text-secondary); margin-bottom: 24px; }
+.confirm-box .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+
+/* ── Reference component styles (Target panel) ── */
+
+/* Component 1: Pill badges */
+.badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.badge-blue   { background: #dbeafe; color: #1d4ed8; }
+.badge-green  { background: #d1fae5; color: #065f46; }
+.badge-purple { background: #ede9fe; color: #5b21b6; }
+.badge-amber  { background: #fef3c7; color: #92400e; }
+.badge-rose   { background: #ffe4e6; color: #9f1239; }
+
+/* Component 2: Profile card */
+.profile-card-ref {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  width: 220px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #fff;
+  font-weight: 700;
+  margin: 0 auto 14px;
+}
+.profile-name { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.profile-role { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+.social-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.social-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.social-btn:hover { border-color: #6366f1; background: #eef2ff; }
+.follow-btn {
+  width: 100%;
+  padding: 9px;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Component 3: Notification toast */
+.toast-ref {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  border-left: 4px solid #6366f1;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 300px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  position: relative;
+}
+.toast-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #eef2ff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.toast-body { flex: 1; }
+.toast-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+.toast-msg { font-size: 13px; color: #6b7280; line-height: 1.4; }
+.toast-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: none; border: none;
+  color: #9ca3af; cursor: pointer; font-size: 16px; line-height: 1;
+}
+
+/* Component 4: Metric card */
+.metric-card-ref {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  width: 200px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.metric-label-ref { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: #9ca3af; margin-bottom: 12px; }
+.metric-value-ref { font-size: 38px; font-weight: 800; color: #111827; line-height: 1; margin-bottom: 10px; }
+.metric-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+.metric-trend.up   { background: #d1fae5; color: #065f46; }
+.metric-trend.down { background: #fee2e2; color: #991b1b; }
+
+/* Section title */
+.section-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.section-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header / Nav ── -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="site-logo">⚡ Frontend Practice</div>
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="challenge">Daily Challenge</button>
+      <button class="tab-btn" data-tab="sandbox">CSS Sandbox</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════
+     SECTION 1: Daily Challenge
+══════════════════════════════════════ -->
+<section id="tab-challenge" class="tool-section active">
+  <h1 class="section-title">Daily Challenge</h1>
+  <p class="section-sub">One new UI challenge every day. Build it in CodePen or Figma.</p>
+
+  <div class="challenge-layout">
+    <!-- Main card -->
+    <div class="challenge-card" id="challenge-card">
+      <div class="challenge-date" id="challenge-date"></div>
+      <div class="challenge-labels">
+        <span class="label-pill trend" id="label-trend"></span>
+        <span class="label-pill component" id="label-component"></span>
+      </div>
+      <div class="challenge-prompt" id="challenge-prompt"></div>
+      <div class="challenge-actions">
+        <a class="btn btn-primary" href="https://codepen.io/pen/" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 8.182l-.018-.087-.017-.05c-.01-.024-.018-.05-.03-.075l-.023-.044-.052-.068-.094-.078L12.498.083a.868.868 0 0 0-.993 0L.502 7.78l-.095.078-.052.068-.02.04c-.013.027-.023.053-.03.08l-.018.044-.019.09C.008 8.268 0 8.357 0 8.445v7.11c0 .09.009.178.026.268l.019.09.018.044c.008.027.018.053.03.08l.023.04.052.068.095.078 11.003 7.699a.867.867 0 0 0 .994 0l11.003-7.699.095-.079.052-.068.023-.04c.012-.026.022-.052.03-.079l.018-.044.019-.09c.017-.09.026-.179.026-.268v-7.11c0-.088-.008-.177-.026-.263zm-11.184 9.888l-3.673-2.575 3.673-2.575 3.673 2.575-3.673 2.575zM9.637 12 6 14.56V9.44L9.637 12zm1.42-.99L14.73 8.445l3.673 2.575L14.73 13.59l-3.673-2.575zM14.73 8.34l-3.673 2.575L7.384 8.34l3.673-2.575L14.73 8.34zM5.636 9.44V14.56L2 12l3.636-2.56zM9.637 12l3.674 2.575-3.674 2.575V12zm5.657 2.575L18.364 12l-3.07-2.15v8.7l3.07-2.15z"/></svg>
+          Open in CodePen
+        </a>
+        <a class="btn btn-outline" href="https://www.figma.com/" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 38 57" fill="currentColor"><path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z" fill="#1ABCFE"/><path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5A9.5 9.5 0 0 1 0 47.5z" fill="#0ACF83"/><path d="M19 0v19h9.5a9.5 9.5 0 1 0 0-19H19z" fill="#FF7262"/><path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z" fill="#F24E1E"/><path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z" fill="#A259FF"/></svg>
+          Open in Figma
+        </a>
+        <button class="btn btn-ghost" id="btn-shuffle">🔀 Shuffle</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="challenge-sidebar">
+      <div class="streak-card">
+        <div class="streak-flame">🔥</div>
+        <div class="streak-number" id="streak-count">0</div>
+        <div class="streak-label">day streak</div>
+      </div>
+
+      <div class="tips-card">
+        <h3>Quick Tips</h3>
+        <div class="tip-item"><span class="tip-dot"></span>Aim for 30–60 min per challenge</div>
+        <div class="tip-item"><span class="tip-dot"></span>Focus on the interaction, not perfection</div>
+        <div class="tip-item"><span class="tip-dot"></span>Take a screenshot when done</div>
+        <div class="tip-item"><span class="tip-dot"></span>Shuffle for a different combo anytime</div>
+      </div>
+
+      <div class="tips-card">
+        <h3>Last 7 days</h3>
+        <div class="history-row" id="history-row"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     SECTION 2: CSS Sandbox
+══════════════════════════════════════ -->
+<section id="tab-sandbox" class="tool-section">
+  <h1 class="section-title">CSS Reproduction Sandbox</h1>
+  <p class="section-sub">Recreate the target component by writing CSS. See how close you get.</p>
+
+  <!-- Toolbar -->
+  <div class="sandbox-toolbar">
+    <span class="toolbar-label">Component:</span>
+    <select class="select-input" id="component-select">
+      <option value="0">Pill Badge Row</option>
+      <option value="1">Profile Card</option>
+      <option value="2">Notification Toast</option>
+      <option value="3">Metric Dashboard Card</option>
+    </select>
+
+    <div class="toolbar-spacer"></div>
+
+    <span class="toolbar-label" style="white-space:nowrap">Match score:</span>
+    <div class="score-bar-wrap">
+      <div class="score-bar-track">
+        <div class="score-bar-fill" id="score-fill"></div>
+      </div>
+      <span class="score-label" id="score-text">—</span>
+    </div>
+  </div>
+
+  <!-- Panels -->
+  <div class="sandbox-panels">
+    <!-- Left: Target -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Target</span>
+        <span class="panel-badge">Reference</span>
+      </div>
+      <div class="preview-area checker" id="target-preview"></div>
+    </div>
+
+    <!-- Right: Your CSS -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Your CSS</span>
+        <span class="panel-badge" id="attempt-badge">Attempt</span>
+      </div>
+      <div class="preview-area checker" id="user-preview"></div>
+      <div class="css-editor-wrap">
+        <textarea
+          class="css-textarea"
+          id="css-textarea"
+          spellcheck="false"
+          placeholder="/* Write your CSS here... */&#10;&#10;/* The HTML skeleton is already in the preview above. */&#10;/* Style it to match the target on the left. */"
+        ></textarea>
+        <div class="editor-actions">
+          <button class="btn btn-ghost btn-sm" id="btn-reset">Reset</button>
+          <button class="btn btn-outline btn-sm" id="btn-reveal">Reveal Answer</button>
+          <button class="btn btn-primary btn-sm" id="btn-score">Check Score</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Confirm dialog -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <h3>Reveal the answer?</h3>
+    <p>This will fill the CSS editor with the reference solution. Are you sure?</p>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-primary" id="confirm-ok">Yes, reveal</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   TOOL 1 — DAILY CHALLENGE
+══════════════════════════════════════ */
+
+const trends = [
+  "Glassmorphism","Bento grid layout","Dark mode toggle",
+  "Skeleton loading state","Scroll-triggered animation","Neumorphism",
+  "Aceternity-style spotlight","Floating label input","Radix-style popover",
+  "Framer Motion entrance","3D card tilt effect","Gradient mesh background",
+  "Variable font animation","Command palette (⌘K)","Lottie micro-animation"
+];
+
+const components = [
+  "Pricing card","Notification toast","Navigation drawer",
+  "Search bar with suggestions","Data table with sort","Profile avatar stack",
+  "Multi-step form","Kanban column","Metric dashboard card",
+  "Timeline feed","Tag/chip input","Media player controls",
+  "Onboarding checklist","Settings panel","Empty state illustration"
+];
+
+function seededRand(seed) {
+  // Simple xorshift-based hash from a string
+  let h = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h;
+}
+
+function getDailyChallenge() {
+  const seed = new Date().toDateString();
+  const h1 = seededRand(seed + "t");
+  const h2 = seededRand(seed + "c");
+  return {
+    trend: trends[h1 % trends.length],
+    component: components[h2 % components.length]
+  };
+}
+
+function makePrompt(trend, component) {
+  return `Build a ${component.toLowerCase()} with ${trend.toLowerCase()} styling.`;
+}
+
+function renderChallenge(trend, component) {
+  document.getElementById("challenge-date").textContent = new Date().toDateString();
+  document.getElementById("label-trend").textContent = trend;
+  document.getElementById("label-component").textContent = component;
+  document.getElementById("challenge-prompt").textContent = makePrompt(trend, component);
+}
+
+// Streak logic
+function updateStreak() {
+  const today = new Date().toDateString();
+  const raw = localStorage.getItem("fp_streak");
+  let data = raw ? JSON.parse(raw) : { count: 0, lastSeen: null, history: [] };
+
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+  if (data.lastSeen === today) {
+    // already counted today
+  } else if (data.lastSeen === yesterday) {
+    data.count++;
+    data.lastSeen = today;
+    data.history = [today, ...(data.history || [])].slice(0, 7);
+  } else {
+    data.count = 1;
+    data.lastSeen = today;
+    data.history = [today];
+  }
+  localStorage.setItem("fp_streak", JSON.stringify(data));
+  return data;
+}
+
+function renderStreak() {
+  const data = updateStreak();
+  document.getElementById("streak-count").textContent = data.count;
+
+  const row = document.getElementById("history-row");
+  row.innerHTML = "";
+  const history = data.history || [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toDateString();
+    const dot = document.createElement("div");
+    dot.className = "history-dot" + (history.includes(d) ? " done" : "");
+    dot.title = d;
+    row.appendChild(dot);
+  }
+}
+
+// Init challenge
+const daily = getDailyChallenge();
+renderChallenge(daily.trend, daily.component);
+renderStreak();
+
+document.getElementById("btn-shuffle").addEventListener("click", () => {
+  const t = trends[Math.floor(Math.random() * trends.length)];
+  const c = components[Math.floor(Math.random() * components.length)];
+  renderChallenge(t, c);
+  // bounce animation
+  const card = document.getElementById("challenge-card");
+  card.style.transform = "scale(0.98)";
+  card.style.transition = "transform 0.12s";
+  setTimeout(() => { card.style.transform = ""; }, 120);
+});
+
+/* ══════════════════════════════════════
+   TOOL 2 — CSS SANDBOX
+══════════════════════════════════════ */
+
+// ── Component definitions ──────────────
+
+const sandboxComponents = [
+  // 0 — Pill badge row
+  {
+    name: "Pill Badge Row",
+    targetHTML: `
+      <div class="badge-row">
+        <span class="badge badge-blue">Design</span>
+        <span class="badge badge-green">Shipped</span>
+        <span class="badge badge-purple">UI/UX</span>
+        <span class="badge badge-amber">Beta</span>
+        <span class="badge badge-rose">Urgent</span>
+      </div>`,
+    skeletonHTML: `
+      <div class="badge-row">
+        <span class="badge badge-blue">Design</span>
+        <span class="badge badge-green">Shipped</span>
+        <span class="badge badge-purple">UI/UX</span>
+        <span class="badge badge-amber">Beta</span>
+        <span class="badge badge-rose">Urgent</span>
+      </div>`,
+    answerCSS: `.badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.badge-blue   { background: #dbeafe; color: #1d4ed8; }
+.badge-green  { background: #d1fae5; color: #065f46; }
+.badge-purple { background: #ede9fe; color: #5b21b6; }
+.badge-amber  { background: #fef3c7; color: #92400e; }
+.badge-rose   { background: #ffe4e6; color: #9f1239; }`
+  },
+
+  // 1 — Profile card
+  {
+    name: "Profile Card",
+    targetHTML: `
+      <div class="profile-card-ref">
+        <div class="avatar-circle">AJ</div>
+        <div class="profile-name">Alex Johnson</div>
+        <div class="profile-role">Senior UI Designer</div>
+        <div class="social-btns">
+          <button class="social-btn">𝕏</button>
+          <button class="social-btn">in</button>
+          <button class="social-btn">gh</button>
+        </div>
+        <button class="follow-btn">Follow</button>
+      </div>`,
+    skeletonHTML: `
+      <div class="profile-card">
+        <div class="avatar">AJ</div>
+        <div class="name">Alex Johnson</div>
+        <div class="role">Senior UI Designer</div>
+        <div class="social-btns">
+          <button class="social-btn">𝕏</button>
+          <button class="social-btn">in</button>
+          <button class="social-btn">gh</button>
+        </div>
+        <button class="follow-btn">Follow</button>
+      </div>`,
+    answerCSS: `.profile-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  width: 220px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  color: #fff;
+  font-weight: 700;
+  margin: 0 auto 14px;
+}
+.name { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+.role { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
+.social-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
+.social-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+.follow-btn {
+  width: 100%;
+  padding: 9px;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}`
+  },
+
+  // 2 — Notification toast
+  {
+    name: "Notification Toast",
+    targetHTML: `
+      <div class="toast-ref">
+        <div class="toast-icon">🔔</div>
+        <div class="toast-body">
+          <div class="toast-title">New message received</div>
+          <div class="toast-msg">Sarah commented on your design file.</div>
+        </div>
+        <button class="toast-close">×</button>
+      </div>`,
+    skeletonHTML: `
+      <div class="toast">
+        <div class="toast-icon">🔔</div>
+        <div class="toast-body">
+          <div class="toast-title">New message received</div>
+          <div class="toast-msg">Sarah commented on your design file.</div>
+        </div>
+        <button class="toast-close">×</button>
+      </div>`,
+    answerCSS: `.toast {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  border-left: 4px solid #6366f1;
+  padding: 16px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 300px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  position: relative;
+}
+.toast-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #eef2ff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.toast-body { flex: 1; }
+.toast-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+.toast-msg { font-size: 13px; color: #6b7280; line-height: 1.4; }
+.toast-close {
+  position: absolute;
+  top: 10px; right: 12px;
+  background: none; border: none;
+  color: #9ca3af; cursor: pointer; font-size: 16px;
+}`
+  },
+
+  // 3 — Metric card
+  {
+    name: "Metric Dashboard Card",
+    targetHTML: `
+      <div class="metric-card-ref">
+        <div class="metric-label-ref">Monthly Revenue</div>
+        <div class="metric-value-ref">$84K</div>
+        <span class="metric-trend up">↑ 12.4%</span>
+      </div>`,
+    skeletonHTML: `
+      <div class="metric-card">
+        <div class="metric-label">Monthly Revenue</div>
+        <div class="metric-value">$84K</div>
+        <span class="metric-trend">↑ 12.4%</span>
+      </div>`,
+    answerCSS: `.metric-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  width: 200px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+.metric-value {
+  font-size: 38px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.metric-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+  background: #d1fae5;
+  color: #065f46;
+}`
+  }
+];
+
+// ── Sandbox state ──────────────────────
+
+let currentCompIdx = 0;
+let debounceTimer = null;
+let scoreDebounce = null;
+
+function loadComponent(idx) {
+  const comp = sandboxComponents[idx];
+
+  // Target panel
+  document.getElementById("target-preview").innerHTML = comp.targetHTML;
+
+  // User preview (skeleton, no styles)
+  document.getElementById("user-preview").innerHTML = comp.skeletonHTML;
+
+  // Clear CSS editor
+  document.getElementById("css-textarea").value = "";
+
+  // Reset style tag
+  applyUserCSS("");
+
+  // Reset score
+  document.getElementById("score-fill").style.width = "0%";
+  document.getElementById("score-text").textContent = "—";
+}
+
+function applyUserCSS(css) {
+  let styleEl = document.getElementById("user-style");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "user-style";
+    document.head.appendChild(styleEl);
+  }
+  // Scope all rules to #user-preview
+  const scoped = scopeCSS(css, "#user-preview");
+  styleEl.textContent = scoped;
+}
+
+function scopeCSS(css, scope) {
+  if (!css.trim()) return "";
+  // Simple rule-by-rule scoping (handles basic cases)
+  try {
+    const result = [];
+    const ruleRx = /([^{]+)\{([^}]*)\}/g;
+    let m;
+    while ((m = ruleRx.exec(css)) !== null) {
+      const selectors = m[1].split(",").map(s => s.trim()).filter(Boolean);
+      const declarations = m[2].trim();
+      if (!declarations) continue;
+      const scoped = selectors.map(sel => {
+        sel = sel.trim();
+        if (!sel) return null;
+        // Don't double-scope if somehow already scoped
+        if (sel.startsWith(scope)) return sel;
+        return `${scope} ${sel}`;
+      }).filter(Boolean).join(", ");
+      result.push(`${scoped} { ${declarations} }`);
+    }
+    return result.join("\n");
+  } catch (e) {
+    return "";
+  }
+}
+
+// ── Score computation ──────────────────
+
+async function computeScore() {
+  const btn = document.getElementById("btn-score");
+  btn.textContent = "Scoring…";
+  btn.disabled = true;
+
+  try {
+    const targetEl = document.getElementById("target-preview");
+    const userEl   = document.getElementById("user-preview");
+
+    const [c1, c2] = await Promise.all([
+      html2canvas(targetEl, { scale: 0.5, useCORS: true, logging: false }),
+      html2canvas(userEl,   { scale: 0.5, useCORS: true, logging: false })
+    ]);
+
+    const w = Math.min(c1.width, c2.width);
+    const h = Math.min(c1.height, c2.height);
+
+    const merged1 = document.createElement("canvas");
+    merged1.width = w; merged1.height = h;
+    merged1.getContext("2d").drawImage(c1, 0, 0);
+
+    const merged2 = document.createElement("canvas");
+    merged2.width = w; merged2.height = h;
+    merged2.getContext("2d").drawImage(c2, 0, 0);
+
+    const d1 = merged1.getContext("2d").getImageData(0,0,w,h).data;
+    const d2 = merged2.getContext("2d").getImageData(0,0,w,h).data;
+
+    let diff = 0;
+    for (let i = 0; i < d1.length; i += 4) {
+      diff += Math.abs(d1[i]   - d2[i])
+            + Math.abs(d1[i+1] - d2[i+1])
+            + Math.abs(d1[i+2] - d2[i+2]);
+    }
+    const maxDiff = d1.length / 4 * 3 * 255;
+    const similarity = Math.max(0, Math.round((1 - diff / maxDiff) * 100));
+
+    renderScore(similarity);
+  } catch (err) {
+    console.warn("Score error:", err);
+    document.getElementById("score-text").textContent = "err";
+  }
+
+  btn.textContent = "Check Score";
+  btn.disabled = false;
+}
+
+function renderScore(pct) {
+  const fill = document.getElementById("score-fill");
+  const label = document.getElementById("score-text");
+  fill.style.width = pct + "%";
+  label.textContent = pct + "%";
+
+  if (pct >= 80) {
+    fill.style.background = "#10b981";
+    label.style.color = "#10b981";
+  } else if (pct >= 50) {
+    fill.style.background = "#f59e0b";
+    label.style.color = "#f59e0b";
+  } else {
+    fill.style.background = "#ef4444";
+    label.style.color = "#ef4444";
+  }
+}
+
+// ── Event listeners ────────────────────
+
+document.getElementById("component-select").addEventListener("change", (e) => {
+  currentCompIdx = parseInt(e.target.value);
+  loadComponent(currentCompIdx);
+});
+
+document.getElementById("css-textarea").addEventListener("input", (e) => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    applyUserCSS(e.target.value);
+  }, 300);
+});
+
+document.getElementById("btn-reset").addEventListener("click", () => {
+  document.getElementById("css-textarea").value = "";
+  applyUserCSS("");
+  renderScore(0);
+  document.getElementById("score-fill").style.width = "0%";
+  document.getElementById("score-text").textContent = "—";
+  document.getElementById("score-text").style.color = "";
+});
+
+document.getElementById("btn-reveal").addEventListener("click", () => {
+  document.getElementById("confirm-overlay").classList.add("show");
+});
+
+document.getElementById("confirm-cancel").addEventListener("click", () => {
+  document.getElementById("confirm-overlay").classList.remove("show");
+});
+
+document.getElementById("confirm-ok").addEventListener("click", () => {
+  document.getElementById("confirm-overlay").classList.remove("show");
+  const css = sandboxComponents[currentCompIdx].answerCSS;
+  document.getElementById("css-textarea").value = css;
+  applyUserCSS(css);
+});
+
+document.getElementById("btn-score").addEventListener("click", computeScore);
+
+// ── Tab switching ──────────────────────
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tool-section").forEach(s => s.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + tab).classList.add("active");
+  });
+});
+
+// ── Init sandbox ──────────────────────
+loadComponent(0);
+</script>
+</body>
+</html>
