@@ -603,7 +603,7 @@
     const { error } = await sb.auth.signInWithPassword({ email, password });
     btn.textContent = 'ログイン'; btn.disabled = false;
     if (error) {
-      errEl.textContent = 'ログインに失敗しました: ' + error.message;
+      errEl.textContent = error.message;
       errEl.classList.add('show');
     }
   }
@@ -624,24 +624,20 @@
       errEl.classList.add('show'); return;
     }
     btn.textContent = '登録中...'; btn.disabled = true;
-    const { data, error } = await sb.auth.signUp({
-      email, password,
-      options: { data: { full_name: name } }
-    });
+    const { data, error } = await sb.auth.signUp({ email, password });
     btn.textContent = '新規登録'; btn.disabled = false;
     if (error) {
-      errEl.textContent = '登録に失敗しました: ' + error.message;
+      errEl.textContent = error.message;
       errEl.classList.add('show'); return;
     }
-    // メール確認オフの場合、即座にセッションが返るのでprofileを作成
     if (data.user) {
       await sb.from('profiles').upsert({
         id: data.user.id,
         email: data.user.email,
         full_name: name
       }, { onConflict: 'id' });
+      showToast('登録完了！');
     }
-    showToast('登録完了！');
   }
 
   async function handleLogout() {
