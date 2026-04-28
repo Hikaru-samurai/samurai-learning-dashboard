@@ -593,14 +593,17 @@
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     const errEl = document.getElementById('loginError');
+    const btn = document.querySelector('#loginForm .btn-accent');
     errEl.classList.remove('show');
     if (!email || !password) {
       errEl.textContent = 'メールアドレスとパスワードを入力してください';
       errEl.classList.add('show'); return;
     }
+    btn.textContent = 'ログイン中...'; btn.disabled = true;
     const { error } = await sb.auth.signInWithPassword({ email, password });
+    btn.textContent = 'ログイン'; btn.disabled = false;
     if (error) {
-      errEl.textContent = 'ログインに失敗しました。メールアドレスかパスワードを確認してください。';
+      errEl.textContent = 'ログインに失敗しました: ' + error.message;
       errEl.classList.add('show');
     }
   }
@@ -610,6 +613,7 @@
     const email = document.getElementById('registerEmail').value.trim();
     const password = document.getElementById('registerPassword').value;
     const errEl = document.getElementById('registerError');
+    const btn = document.querySelector('#registerForm .btn-accent');
     errEl.classList.remove('show');
     if (!name || !email || !password) {
       errEl.textContent = 'すべての項目を入力してください';
@@ -619,15 +623,25 @@
       errEl.textContent = 'パスワードは6文字以上で設定してください';
       errEl.classList.add('show'); return;
     }
-    const { error } = await sb.auth.signUp({
+    btn.textContent = '登録中...'; btn.disabled = true;
+    const { data, error } = await sb.auth.signUp({
       email, password,
       options: { data: { full_name: name } }
     });
+    btn.textContent = '新規登録'; btn.disabled = false;
     if (error) {
       errEl.textContent = '登録に失敗しました: ' + error.message;
       errEl.classList.add('show'); return;
     }
-    showToast('登録完了！確認メールをご確認ください。');
+    // メール確認オフの場合、即座にセッションが返るのでprofileを作成
+    if (data.user) {
+      await sb.from('profiles').upsert({
+        id: data.user.id,
+        email: data.user.email,
+        full_name: name
+      }, { onConflict: 'id' });
+    }
+    showToast('登録完了！');
   }
 
   async function handleLogout() {
@@ -652,7 +666,16 @@
   });
 
   async function loadProfileAndInit() {
-    const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    let { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    // トリガーが失敗した場合はクライアント側で作成
+    if (!data) {
+      const { data: created } = await sb.from('profiles').upsert({
+        id: currentUser.id,
+        email: currentUser.email,
+        full_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0]
+      }, { onConflict: 'id' }).select().single();
+      data = created;
+    }
     currentProfile = data;
 
     const role = currentProfile?.role || 'student';
