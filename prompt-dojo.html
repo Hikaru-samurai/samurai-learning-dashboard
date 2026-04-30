@@ -250,6 +250,14 @@
     .submit-btn:hover { opacity: 0.88; transform: translateY(-1px); }
     .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+    .input-error {
+      font-size: 13px;
+      color: var(--red);
+      display: none;
+      margin-top: -4px;
+    }
+    .input-error.show { display: block; }
+
     /* ── Result ── */
     .result-card {
       background: var(--surface);
@@ -423,7 +431,8 @@
     <div class="input-section">
       <div class="input-label">あなたのプロンプト</div>
       <textarea id="promptInput" placeholder="ここにプロンプトを入力してください…&#10;&#10;例：「〇〇について、箇条書きで5点にまとめてください。各項目は具体例を含めて100字以内で説明してください。」"></textarea>
-      <button class="submit-btn" id="submitBtn" onclick="evaluate()">
+      <div class="input-error" id="inputError">プロンプトを入力してください。</div>
+      <button class="submit-btn" id="submitBtn" type="button" onclick="evaluate()">
         採点する
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -593,14 +602,19 @@
 
     async function evaluate() {
       const prompt = document.getElementById('promptInput').value.trim();
-      if (!prompt) { alert('プロンプトを入力してください。'); return; }
+      const errorEl = document.getElementById('inputError');
+      if (!prompt) {
+        errorEl.classList.add('show');
+        document.getElementById('promptInput').focus();
+        return;
+      }
+      errorEl.classList.remove('show');
 
       const challenge = challenges[currentIdx];
       document.getElementById('submitBtn').disabled = true;
       document.getElementById('resultCard').classList.remove('show');
       document.getElementById('loading').classList.add('show');
 
-      // 少し待ってリアル感を演出
       await new Promise(r => setTimeout(r, 600));
 
       try {
@@ -645,12 +659,13 @@
       document.getElementById('feedbackText').textContent = result.feedback || '';
 
       document.getElementById('resultCard').classList.add('show');
-      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function retry() {
       document.getElementById('promptInput').value = '';
       document.getElementById('resultCard').classList.remove('show');
+      document.getElementById('inputError').classList.remove('show');
     }
   </script>
 
