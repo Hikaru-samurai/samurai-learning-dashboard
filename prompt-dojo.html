@@ -258,6 +258,18 @@
     }
     .input-error.show { display: block; }
 
+    textarea.shake {
+      border-color: var(--red) !important;
+      animation: shake 0.4s ease;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
     /* ── Result ── */
     .result-card {
       background: var(--surface);
@@ -600,30 +612,49 @@
       return { rank, total, scores, feedback };
     }
 
-    async function evaluate() {
-      const prompt = document.getElementById('promptInput').value.trim();
-      const errorEl = document.getElementById('inputError');
+    // IME 変換中フラグ（変換確定前のクリックを正しく処理するため）
+    let _composing = false;
+    document.getElementById('promptInput').addEventListener('compositionstart', function() { _composing = true; });
+    document.getElementById('promptInput').addEventListener('compositionend', function() {
+      _composing = false;
+      if (_pendingEval) { _pendingEval = false; evaluate(); }
+    });
+    let _pendingEval = false;
+
+    function evaluate() {
+      // IME 変換中なら確定を待つ
+      if (_composing) { _pendingEval = true; return; }
+
+      var promptEl = document.getElementById('promptInput');
+      var prompt = promptEl.value.trim();
+      var errorEl = document.getElementById('inputError');
+
       if (!prompt) {
         errorEl.classList.add('show');
-        document.getElementById('promptInput').focus();
+        promptEl.classList.add('shake');
+        promptEl.addEventListener('animationend', function() { promptEl.classList.remove('shake'); }, { once: true });
+        promptEl.focus();
         return;
       }
       errorEl.classList.remove('show');
 
-      const challenge = challenges[currentIdx];
-      document.getElementById('submitBtn').disabled = true;
+      var challenge = challenges[currentIdx];
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
       document.getElementById('resultCard').classList.remove('show');
       document.getElementById('loading').classList.add('show');
 
-      await new Promise(r => setTimeout(r, 600));
-
-      try {
-        const result = ruleBasedScore(prompt, challenge);
-        showResult(result);
-      } finally {
+      setTimeout(function() {
+        try {
+          var result = ruleBasedScore(prompt, challenge);
+          showResult(result);
+        } catch (e) {
+          document.getElementById('feedbackText').textContent = 'エラーが発生しました: ' + (e.message || e);
+          document.getElementById('resultCard').classList.add('show');
+        }
         document.getElementById('loading').classList.remove('show');
-        document.getElementById('submitBtn').disabled = false;
-      }
+        btn.disabled = false;
+      }, 400);
     }
 
     function showResult(result) {
