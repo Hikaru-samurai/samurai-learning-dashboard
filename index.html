@@ -593,143 +593,44 @@
 
 <script>
   // ============================================================
-  //  SUPABASE
+  //  LOCAL STORAGE HELPERS
   // ============================================================
-  const { createClient } = supabase;
-  const sb = createClient(
-    'https://dhdmgeiaprrtdzqjkhvz.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoZG1nZWlhcHJydGR6cWpraHZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwODkxNDUsImV4cCI6MjA5MDY2NTE0NX0.nreXHGLO6BUOkK2eJeW6O7McaUiFINRJ7xeLctffySQ'
-  );
+  function getLogs() { return JSON.parse(localStorage.getItem('samurai_logs') || '[]'); }
+  function saveLogs(logs) { localStorage.setItem('samurai_logs', JSON.stringify(logs)); }
+  function getProfile() {
+    return JSON.parse(localStorage.getItem('samurai_profile') || '{"full_name":"ゲスト","daily_goal_hours":3,"course_name":"","weekly_curriculum":""}');
+  }
+  function saveProfile(p) { localStorage.setItem('samurai_profile', JSON.stringify(p)); }
 
   // ============================================================
   //  STATE
   // ============================================================
-  let currentUser = null;
-  let currentProfile = null;
+  const currentUser = { id: 'local' };
+  let currentProfile = getProfile();
   let currentStars = 0;
   let chartInstance = null;
   const studentCache = {};
 
   // ============================================================
-  //  AUTH UI
+  //  INIT（ログイン不要）
   // ============================================================
-  function switchAuthTab(tab) {
-    document.getElementById('loginTab').classList.toggle('active', tab === 'login');
-    document.getElementById('registerTab').classList.toggle('active', tab === 'register');
-    document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
-    document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
-  }
+  async function handleLogout() { /* ログイン不要のため何もしない */ }
 
-  async function handleLogin() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errEl = document.getElementById('loginError');
-    const btn = document.querySelector('#loginForm .btn-accent');
-    errEl.classList.remove('show');
-    if (!email || !password) {
-      errEl.textContent = 'メールアドレスとパスワードを入力してください';
-      errEl.classList.add('show'); return;
-    }
-    btn.textContent = 'ログイン中...'; btn.disabled = true;
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    btn.textContent = 'ログイン'; btn.disabled = false;
-    if (error) {
-      errEl.textContent = error.message;
-      errEl.classList.add('show');
-    }
-  }
+  (async function init() {
+    currentProfile = getProfile();
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+    document.getElementById('viewTabs').classList.add('hidden');
 
-  async function handleRegister() {
-    const name = document.getElementById('registerName').value.trim();
-    const email = document.getElementById('registerEmail').value.trim();
-    const password = document.getElementById('registerPassword').value;
-    const errEl = document.getElementById('registerError');
-    const btn = document.querySelector('#registerForm .btn-accent');
-    errEl.classList.remove('show');
-    if (!name || !email || !password) {
-      errEl.textContent = 'すべての項目を入力してください';
-      errEl.classList.add('show'); return;
-    }
-    if (password.length < 6) {
-      errEl.textContent = 'パスワードは6文字以上で設定してください';
-      errEl.classList.add('show'); return;
-    }
-    btn.textContent = '登録中...'; btn.disabled = true;
-    const { data, error } = await sb.auth.signUp({ email, password });
-    btn.textContent = '新規登録'; btn.disabled = false;
-    if (error) {
-      errEl.textContent = error.message;
-      errEl.classList.add('show'); return;
-    }
-    if (data.user) {
-      await sb.from('profiles').upsert({
-        id: data.user.id,
-        email: data.user.email,
-        full_name: name
-      }, { onConflict: 'id' });
-      showToast('登録完了！');
-    }
-  }
-
-  async function handleLogout() {
-    await sb.auth.signOut();
-  }
-
-  // ============================================================
-  //  AUTH STATE
-  // ============================================================
-  sb.auth.onAuthStateChange(async (event, session) => {
-    console.log('auth event:', event, session?.user?.email);
-    if (session?.user) {
-      currentUser = session.user;
-      try {
-        await loadProfileAndInit();
-        document.getElementById('authScreen').classList.add('hidden');
-        document.getElementById('appScreen').classList.remove('hidden');
-      } catch(e) {
-        console.error('loadProfileAndInit error:', e);
-        document.getElementById('loginError').textContent = '初期化エラー: ' + e.message;
-        document.getElementById('loginError').classList.add('show');
-      }
-    } else {
-      currentUser = null;
-      currentProfile = null;
-      document.getElementById('authScreen').classList.remove('hidden');
-      document.getElementById('appScreen').classList.add('hidden');
-    }
-  });
-
-  async function loadProfileAndInit() {
-    let { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    // トリガーが失敗した場合はクライアント側で作成
-    if (!data) {
-      const { data: created } = await sb.from('profiles').upsert({
-        id: currentUser.id,
-        email: currentUser.email,
-        full_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0]
-      }, { onConflict: 'id' }).select().single();
-      data = created;
-    }
-    currentProfile = data;
-
-    const role = currentProfile?.role || 'student';
-    const name = currentProfile?.full_name || currentUser.email;
+    const name = currentProfile.full_name || 'ゲスト';
     document.getElementById('userInfo').innerHTML = `
       <div class="user-avatar">${name.charAt(0).toUpperCase()}</div>
       <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</span>
-      <span class="badge badge-${role}">${roleName(role)}</span>
     `;
-
-    if (role === 'instructor' || role === 'admin') {
-      document.getElementById('viewTabs').classList.remove('hidden');
-    } else {
-      document.getElementById('viewTabs').classList.add('hidden');
-    }
-
     applySettings(currentProfile);
     document.getElementById('recordDate').value = formatDate(new Date());
     await renderDashboard();
-  }
+  })();
 
   function roleName(r) {
     return { student: '受講生', instructor: 'インストラクター', admin: '運営' }[r] || r;
@@ -883,10 +784,8 @@
       daily_goal_hours: parseFloat(goalVal),
       weekly_curriculum: document.getElementById('settingCurriculum').value.trim()
     };
-    const { error } = await sb.from('profiles').update(updates).eq('id', currentUser.id);
-    if (error) { showToast('保存に失敗しました', true); return; }
-
     currentProfile = { ...currentProfile, ...updates };
+    saveProfile(currentProfile);
     applySettings(currentProfile);
     closeSettingsModal();
     await renderDashboard();
@@ -933,7 +832,7 @@
     if (currentStars === 0) { showToast('達成度（★）を選択してください', true); return; }
 
     const record = {
-      user_id: currentUser.id,
+      id: Date.now().toString(),
       date,
       learned,
       hours: parseFloat(hoursVal),
@@ -942,8 +841,9 @@
       feedback: getFeedback({ stars: currentStars, hours: parseFloat(hoursVal), stuck })
     };
 
-    const { error } = await sb.from('learning_logs').insert(record);
-    if (error) { showToast('保存に失敗しました: ' + error.message, true); return; }
+    const logs = getLogs();
+    logs.push(record);
+    saveLogs(logs);
 
     setFeedbackText(record.feedback);
     await renderDashboard();
@@ -1018,10 +918,7 @@
   //  DASHBOARD RENDER
   // ============================================================
   async function renderDashboard() {
-    const { data: logs } = await sb
-      .from('learning_logs').select('*')
-      .eq('user_id', currentUser.id).order('date');
-    const logsArr = logs || [];
+    const logsArr = getLogs().sort((a, b) => a.date.localeCompare(b.date));
     const dailyGoal = currentProfile?.daily_goal_hours || 3;
 
     document.getElementById('streakValue').textContent = calcStreak(logsArr);
@@ -1114,8 +1011,7 @@
 
   async function deleteRecord(id) {
     if (!confirm('この記録を削除しますか？')) return;
-    const { error } = await sb.from('learning_logs').delete().eq('id', id).eq('user_id', currentUser.id);
-    if (error) { showToast('削除に失敗しました', true); return; }
+    saveLogs(getLogs().filter(l => l.id !== id));
     await renderDashboard();
     showToast('記録を削除しました');
   }
