@@ -49,8 +49,8 @@ export const questions = [
     scenario: "旅行サイトのバナーに使う空の写真。適切な露出で空の色が美しく表現されているのはどれ？",
     correctIndex: 0,
     unsplashQueries: [
-      "blue sky landscape beautiful exposure",
-      "overexposed sky washed out white",
+      "blue sky clouds travel scenery",
+      "bright white blown out sky overexposed",
     ],
     explanation: {
       summary: "オーバー露出で白飛びしていない写真が正解です。",
