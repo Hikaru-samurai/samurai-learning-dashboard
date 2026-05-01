@@ -132,7 +132,7 @@ const ResultScreen = ({ sessionResults, xpGained, progress, prevXP, onRestart })
           whileHover={{ scale: 1.02, backgroundColor: '#F0BE30' }}
           whileTap={{ scale: 0.97 }}
         >
-          もう1セット
+          {percentage <= 60 ? 'もう一度やる' : 'もう1セット'}
         </motion.button>
       </motion.div>
     </motion.div>
