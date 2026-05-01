@@ -444,7 +444,7 @@
       <div class="input-label">あなたのプロンプト</div>
       <textarea id="promptInput" placeholder="ここにプロンプトを入力してください…&#10;&#10;例：「〇〇について、箇条書きで5点にまとめてください。各項目は具体例を含めて100字以内で説明してください。」"></textarea>
       <div class="input-error" id="inputError">プロンプトを入力してください。</div>
-      <button class="submit-btn" id="submitBtn" type="button" onclick="evaluate()">
+      <button class="submit-btn" id="submitBtn" type="button" onclick="scorePrompt()">
         採点する
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M2.5 7h9M7.5 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -617,12 +617,11 @@
     document.getElementById('promptInput').addEventListener('compositionstart', function() { _composing = true; });
     document.getElementById('promptInput').addEventListener('compositionend', function() {
       _composing = false;
-      if (_pendingEval) { _pendingEval = false; evaluate(); }
+      if (_pendingEval) { _pendingEval = false; scorePrompt(); }
     });
     let _pendingEval = false;
 
-    function evaluate() {
-      // IME 変換中なら確定を待つ
+    function scorePrompt() {
       if (_composing) { _pendingEval = true; return; }
 
       var promptEl = document.getElementById('promptInput');
